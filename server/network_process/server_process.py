@@ -276,7 +276,6 @@ class GobandServer:
             获取结束位置，并发送到客户端
         """
         sleep(0.1)
-        print(self.__manager.list_same_location)
         end_position = [item.__repr__() for item in self.__manager.list_same_location]
         for item in self.__list_room_connfd:
             item.send(("%s %s %s %s %s" % tuple(end_position)).encode())

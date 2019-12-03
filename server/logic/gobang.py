@@ -37,22 +37,23 @@ class GameCoreController:
         '''
         for i in range(-1, 2):
             self.get_row_same_point(lambda r, c: Location(r, c), i)
+            if self.list_same_location:
+                return
             self.get_column_same_point(lambda r, c: Location(c, r), i)
             if self.list_same_location:
                 return
-        self.get_column_same_point(lambda r, c: Location(c, r),0)
 
     def map_write(self, point, value):
         position = eval(point)
         self.__map[position.index_r][position.index_c] = value
         self.__get_same_point()
 
-    def get_column_same_point(self, func,N):
+    def get_column_same_point(self, func, N):
         '''
             统计列相邻元素相同的个数，将超过5个相连相同元素的坐标加入列表
         '''
         self.__square_matrix_transpose()
-        self.get_row_same_point(func,N)
+        self.get_row_same_point(func, N)
         self.__square_matrix_transpose()
 
     def __square_matrix_transpose(self):
