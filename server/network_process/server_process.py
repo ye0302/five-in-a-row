@@ -105,6 +105,10 @@ class GobandServer:
         if not data:
             self.do_user_disconnect(connfd)
             return
+        if data == b"Q":
+            self.__list_room_connfd.remove(connfd)
+            self.__list_room_user.remove(self.__login_user[connfd])
+            return
         data = (data.decode()).split(" ")
         return data
 
@@ -210,9 +214,9 @@ class GobandServer:
                 os._exit(1)
             for fd, event in events:
                 if self.__list_room_connfd[0].fileno() == fd:
-                    self.__handle(choise_first, 0, ep)
+                    self.__handle(choise_first, 0)
                 elif self.__list_room_connfd[1].fileno() == fd:
-                    self.__handle(other, 1, ep)
+                    self.__handle(other, 1)
 
     def __destribute_chess_color(self):
         """
@@ -223,24 +227,33 @@ class GobandServer:
         other = 3 - choise_first
         self.__list_room_connfd[0].send(("B %s %s" % (choise_first, self.__list_room_user[1].__repr__())).encode())
         self.__list_room_connfd[1].send(("B %s %s" % (other, self.__list_room_user[0].__repr__())).encode())
-        print("分配先手")
         return choise_first, other
 
-    def __handle(self, value, index, ep):
+    def __handle(self, value, index):
         """
             根据用户信息处理走棋，悔棋，退出和游戏结束逻辑
         :param value: 走棋者棋子颜色对应的数字
         :param index: 走棋者索引
         :param ep: epoll对象
         """
+
         data = self.__list_room_connfd[index].recv(1024)
         if not data:
             self.__quit(index)
         msg = (data.decode()).split(" ")
         if msg[0] == "P":
             self.__discard(data, index, msg, value)
-        if msg[0] == "G":
+        elif msg[0] == "G":
             self.__do_give_up(index)
+        elif msg[0] == "C":
+            position = self.__user_previous_record[-1]
+            self.__list_room_connfd[index - 1].send(("C %s" % position).encode())
+        elif msg[0] == "A":
+            position = self.__user_previous_record.pop()
+            self.__manager.assignment_to_zero(position)
+            self.__list_room_connfd[index - 1].send(("A %s" % position).encode())
+        elif msg[0] == "D":
+            self.__list_room_connfd[index - 1].send(b"D ")
 
     def __discard(self, data, index, msg, value):
         """
@@ -263,7 +276,6 @@ class GobandServer:
         :param data: 赢家最后一部棋子位置
         :param index: 赢家的索引
         """
-        print("游戏结束")
         sleep(0.1)
         self.__list_room_connfd[index].send(b"O WIN")
         self.__list_room_connfd[index - 1].send(b"O LOSE")
@@ -299,6 +311,7 @@ class GobandServer:
 
     def __do_give_up(self, index):
         self.__update_score(index - 1)
+        self.__list_room_connfd[index].send(b"G")
         self.__list_room_connfd[index - 1].send(b"O QWIN")
         self.__back_login_status([1, 1])
         os._exit(1)

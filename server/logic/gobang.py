@@ -35,13 +35,34 @@ class GameCoreController:
         '''
             将可消去元素的坐标加入列表
         '''
-        for i in range(-1, 2):
+        for i in range(-1, 1):
             self.get_row_same_point(lambda r, c: Location(r, c), i)
             if self.list_same_location:
+                print(self.list_same_location)
                 return
             self.get_column_same_point(lambda r, c: Location(c, r), i)
             if self.list_same_location:
                 return
+        self.__get_row_upper_same_point()
+
+    # def _get_row_lower_sam_point(self):
+    #     self.get_row_same_point(lambda r, c: Location(r, c), -1)
+    #     if self.list_same_location:
+    #         return
+    #     self.get_column_same_point(lambda r, c: Location(c, r), -1)
+    #     if self.list_same_location:
+    #         return
+
+    def __get_row_upper_same_point(self):
+        self.get_row_same_point(lambda r, c: Location(r, c), 1)
+        if self.list_same_location:
+            return
+        self.__line_reverse()
+        self.get_row_same_point(lambda r, c: Location(r, len(self.__map) - c - 1), -1)
+        if self.list_same_location:
+            return
+        self.get_column_same_point(lambda r, c: Location(r, len(self.__map) - c - 1), -1)
+        self.__line_reverse()
 
     def map_write(self, point, value):
         position = eval(point)
@@ -56,6 +77,10 @@ class GameCoreController:
         self.get_row_same_point(func, N)
         self.__square_matrix_transpose()
 
+    def __line_reverse(self):
+        for line in self.__map:
+            line.reverse()
+
     def __square_matrix_transpose(self):
         '''
             矩阵转置
@@ -64,6 +89,10 @@ class GameCoreController:
         for r in range(1, len(self.__map)):
             for c in range(r):
                 self.__map[r][c], self.__map[c][r] = self.__map[c][r], self.__map[r][c]
+
+    def assignment_to_zero(self, position):
+        position = eval(position)
+        self.__map[position.index_r][position.index_c] = 0
 
     def get_row_same_point(self, func, N):
 
@@ -74,11 +103,13 @@ class GameCoreController:
             count = 1
             for c in range(len(self.__map[0]) - 1):
                 r -= N
-                if r < 0 or r > len(self.__map):
+                if r <= 0 or r >= len(self.__map):
                     break
                 if self.__map[r + N][c] == 0:
                     count = 1
                     continue
+                if c + 1 > len(self.__map[0]) - 1:
+                    break
                 if self.__map[r + N][c] == self.__map[r][c + 1]:
                     count += 1
                     if count == 5:
