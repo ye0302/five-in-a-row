@@ -6,7 +6,7 @@ from client.login_register import LoginAndRegister
 from client.game_functions import *
 from client.settings import Settings
 from client.chessboard import Chessboard
-from threading import Thread
+from threading import Thread, Lock, Event
 from time import sleep
 from client.bll import ClientCoreController
 from client.model import Location
@@ -20,6 +20,7 @@ class GameView:
         self.adverse = None
         self.dict_func = {"Q": self.do_quit, "G": self.do_gove_up, "R": self.do_own_regret, "A": self.agree,
                           "D": self.disagree}
+        self.e = Event()
 
     def __do_login_or_register(self):
         """
@@ -46,8 +47,8 @@ class GameView:
             self.update_by_adverse()
 
     def update_by_adverse(self):
-        while not self.create_butt.game_is_alive:
-            sleep(0.2)
+        self.e.wait()
+        self.e.clear()
         self.wait_destribute()  # 分配房间
         self.update_by_recv()  # 接受对方走棋，更新棋盘
 
@@ -62,6 +63,7 @@ class GameView:
                 self.manager.join_game()
                 self.create_butt.game_is_alive = True
                 self.create_butt.mv_start_button(self.own)
+                self.e.set()
                 continue
             func = self.dict_func.get(result)
             if func:

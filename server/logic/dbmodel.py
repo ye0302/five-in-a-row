@@ -18,18 +18,23 @@ class DBModel:
         if not result:
             return b"F"
         if result[2] == password:
-            return "OK",result[0:2]
+            return "OK", result[0:2]
         return b"PF"
 
     def register(self, name, passwd, qq_number):
         self.cur = self.db.cursor()
-        sql = "select name from users where qq_number='%s' | name='%s'"
-        self.cur.execute(sql, [qq_number, name])
+        sql = "select name from users where qq_number=%s union select name from users where name=%s"
+        try:
+            self.cur.execute(sql, [qq_number, name])
+        except Exception as e:
+            print(e)
         result = self.cur.fetchone()
-        self.cur.close()
         if not result:
             self.do_add_user(name, passwd, qq_number)
-        elif result[0] == name:
+            self.cur.close()
+            return
+        self.cur.close()
+        if result[0] == name:
             return b"NE"
         return b"QE"
 

@@ -4,6 +4,8 @@ import tkinter.messagebox
 
 sys.path.append("/home/tarena/zhixuda/aid1909/my_project")
 from client.user_model import UserModel
+
+
 # from client.scoreboard import Scoreboard
 
 
@@ -102,7 +104,9 @@ class LoginAndRegister:
         self.user.qq_number = self.list_value[1].get()
         self.user.password = self.list_value[2].get()
         npf = self.list_value[3].get()
-        if self.user.password != npf:
+        if not (self.user.name and self.user.qq_number and self.user.password and npf):
+            tkinter.messagebox.showerror('Error', '信息输入不完整!')
+        elif self.user.password != npf:
             tkinter.messagebox.showerror('Error', '密码输入不一致!')
         else:
             self.send_data_decide()
